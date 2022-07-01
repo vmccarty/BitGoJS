@@ -84,7 +84,8 @@
     "secp256k1": "^4.0.2",
     "secrets.js-grempe": "^1.1.0",
     "stellar-sdk": "^10.0.1",
-    "superagent": "^3.8.3"
+    "superagent": "^3.8.3",
+    "near-api-js": "0.45.1"
   },
   "devDependencies": {
     "@bitgo/sdk-test": "^1.0.0",
