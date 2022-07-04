@@ -1,15 +1,16 @@
 import * as bitcoinjs from 'bitcoinjs-lib';
+import * as dogecoinjs from 'dogecoinjs-lib';
 import { Network } from '../../networks';
 import { UtxoTransactionBuilder } from '../UtxoTransactionBuilder';
 import { DashTransaction } from './DashTransaction';
 import { UtxoTransaction } from '../UtxoTransaction';
 
-export class DashTransactionBuilder extends UtxoTransactionBuilder<DashTransaction> {
+export class DashTransactionBuilder extends UtxoTransactionBuilder<number, DashTransaction> {
   constructor(network: Network, txb?: UtxoTransactionBuilder) {
     super(network, txb);
   }
 
-  createInitialTransaction(network: Network, tx?: bitcoinjs.Transaction): DashTransaction {
+  createInitialTransaction(network: Network, tx?: dogecoinjs.Transaction): DashTransaction {
     return new DashTransaction(network, tx as UtxoTransaction);
   }
 
@@ -21,7 +22,7 @@ export class DashTransactionBuilder extends UtxoTransactionBuilder<DashTransacti
     this.tx.extraPayload = extraPayload;
   }
 
-  static fromTransaction(
+  static fromTransactionDash(
     tx: DashTransaction,
     network?: bitcoinjs.Network,
     prevOutput?: bitcoinjs.TxOutput[]

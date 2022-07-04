@@ -1,4 +1,5 @@
 import * as bitcoinjs from 'bitcoinjs-lib';
+import * as dogecoinjs from 'dogecoinjs-lib';
 import * as types from 'bitcoinjs-lib/src/types';
 const typeforce = require('typeforce');
 
@@ -12,16 +13,16 @@ import {
 import { UtxoTransactionBuilder } from '../UtxoTransactionBuilder';
 import { toOutputScript } from './address';
 
-export class ZcashTransactionBuilder extends UtxoTransactionBuilder<ZcashTransaction> {
+export class ZcashTransactionBuilder extends UtxoTransactionBuilder<number, ZcashTransaction> {
   constructor(network: ZcashNetwork) {
     super(network);
   }
 
-  createInitialTransaction(network: Network, tx?: bitcoinjs.Transaction): ZcashTransaction {
+  createInitialTransaction(network: Network, tx?: dogecoinjs.Transaction): ZcashTransaction {
     return new ZcashTransaction(network as ZcashNetwork, tx as ZcashTransaction);
   }
 
-  static fromTransaction(
+  static fromTransactionZcash(
     transaction: ZcashTransaction,
     network?: bitcoinjs.Network,
     prevOutput?: bitcoinjs.TxOutput[]

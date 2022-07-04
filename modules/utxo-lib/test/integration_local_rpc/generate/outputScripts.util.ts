@@ -1,5 +1,5 @@
 import * as bip32 from 'bip32';
-import { Transaction, TxOutput } from 'bitcoinjs-lib';
+import { Transaction, TxOutput } from 'dogecoinjs-lib';
 import * as utxolib from '../../../src';
 import {
   createOutputScript2of3,

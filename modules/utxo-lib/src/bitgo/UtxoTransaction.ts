@@ -1,4 +1,4 @@
-import * as bitcoinjs from 'bitcoinjs-lib';
+import * as bitcoinjs from 'dogecoinjs-lib';
 import * as varuint from 'varuint-bitcoin';
 
 import { networks, Network, getMainnet, isBitcoinGold } from '../networks';
@@ -8,12 +8,15 @@ export function varSliceSize(slice: Buffer): number {
   return varuint.encodingLength(length) + length;
 }
 
-export class UtxoTransaction extends bitcoinjs.Transaction {
+export class UtxoTransaction<TNumber extends number | bigint = number> extends bitcoinjs.Transaction<TNumber> {
   static SIGHASH_FORKID = 0x40;
   /** @deprecated use SIGHASH_FORKID */
   static SIGHASH_BITCOINCASHBIP143 = UtxoTransaction.SIGHASH_FORKID;
 
-  constructor(public network: Network, transaction: bitcoinjs.Transaction = new bitcoinjs.Transaction()) {
+  constructor(
+    public network: Network,
+    transaction: bitcoinjs.Transaction<TNumber> = new bitcoinjs.Transaction<TNumber>()
+  ) {
     super();
     this.version = transaction.version;
     this.locktime = transaction.locktime;
@@ -21,16 +24,17 @@ export class UtxoTransaction extends bitcoinjs.Transaction {
     this.outs = transaction.outs.map((v) => ({ ...v }));
   }
 
-  static fromBuffer(
+  static fromBuffer<TNumber extends number | bigint = number>(
     buf: Buffer,
     noStrict: boolean,
+    amountType: 'number' | 'bigint' = 'number',
     network?: Network,
-    prevOutput?: bitcoinjs.TxOutput[]
-  ): UtxoTransaction {
+    prevOutput?: bitcoinjs.TxOutput<TNumber>[]
+  ): UtxoTransaction<TNumber> {
     if (!network) {
       throw new Error(`must provide network`);
     }
-    return new UtxoTransaction(network, bitcoinjs.Transaction.fromBuffer(buf, noStrict));
+    return new UtxoTransaction<TNumber>(network, bitcoinjs.Transaction.fromBuffer<TNumber>(buf, noStrict, amountType));
   }
 
   addForkId(hashType: number): number {
@@ -42,7 +46,7 @@ export class UtxoTransaction extends bitcoinjs.Transaction {
     return hashType;
   }
 
-  hashForWitnessV0(inIndex: number, prevOutScript: Buffer, value: number, hashType: number): Buffer {
+  hashForWitnessV0(inIndex: number, prevOutScript: Buffer, value: TNumber, hashType: number): Buffer {
     return super.hashForWitnessV0(inIndex, prevOutScript, value, this.addForkId(hashType));
   }
 
@@ -52,7 +56,7 @@ export class UtxoTransaction extends bitcoinjs.Transaction {
   hashForSignatureByNetwork(
     inIndex: number,
     prevoutScript: Buffer,
-    value: number | undefined,
+    value: TNumber | undefined,
     hashType: number
   ): Buffer {
     switch (getMainnet(this.network)) {
@@ -91,7 +95,7 @@ export class UtxoTransaction extends bitcoinjs.Transaction {
     return this.hashForSignatureByNetwork(inIndex, prevOutScript, (this.ins[inIndex] as any).value, hashType);
   }
 
-  clone(): UtxoTransaction {
-    return new UtxoTransaction(this.network, super.clone());
+  clone(): UtxoTransaction<TNumber> {
+    return new UtxoTransaction<TNumber>(this.network, super.clone());
   }
 }
