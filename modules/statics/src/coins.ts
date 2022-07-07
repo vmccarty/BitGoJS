@@ -834,6 +834,7 @@ export const coins = CoinMap.fromCoins([
   ofcerc20('ofcimx', 'Immutable X', 18, UnderlyingAsset.IMXV2),
   ofcerc20('ofcinj', 'Injective Token', 18, UnderlyingAsset.INJV2),
   ofcerc20('ofclink', 'ChainLink', 18, UnderlyingAsset.LINK),
+  ofcerc20('ofclooks', 'LooksRare', 18, UnderlyingAsset.LOOKS),
   ofcerc20('ofclrc', 'loopring', 18, UnderlyingAsset.LRC),
   ofcerc20('ofclrcv2', 'loopring V2', 18, UnderlyingAsset.LRCV2),
   ofcerc20('ofcmatic', 'Matic Token', 18, UnderlyingAsset.MATIC),
