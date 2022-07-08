@@ -4,7 +4,6 @@ import {
   BitGoBase,
   KeyPair,
   VerifyAddressOptions,
-  VerifyTransactionOptions,
   SignedTransaction,
   ParseTransactionOptions,
   MethodNotImplementedError,
@@ -12,9 +11,18 @@ import {
   InvalidTransactionError,
   FeeEstimateOptions,
   SigningError,
+  TransactionType,
+  InvalidAddressError,
+  UnexpectedAddressError,
 } from '@bitgo/sdk-core';
 import * as AvaxpLib from './lib';
-import { AvaxpSignTransactionOptions, TransactionFee, ExplainTransactionOptions } from './iface';
+import {
+  AvaxpSignTransactionOptions,
+  TransactionFee,
+  ExplainTransactionOptions,
+  AvaxpVerifyTransactionOptions,
+} from './iface';
+import * as _ from 'lodash';
 
 export class AvaxP extends BaseCoin {
   protected readonly _staticsCoin: Readonly<StaticsBaseCoin>;
@@ -50,13 +58,43 @@ export class AvaxP extends BaseCoin {
     return true;
   }
 
-  async verifyTransaction(params: VerifyTransactionOptions): Promise<boolean> {
-    // TODO(STLX-16574): verifyTransaction
-    return true;
-  }
+  async verifyTransaction(params: AvaxpVerifyTransactionOptions): Promise<boolean> {
+    const txHex = params.txPrebuild && params.txPrebuild.txHex;
+    if (!txHex) {
+      throw new Error('missing required tx prebuild property txHex');
+    }
+    let tx;
+    try {
+      const txBuilder = this.getBuilder().from(txHex);
+      tx = await txBuilder.build();
+    } catch (error) {
+      console.log({ error });
+      throw new Error('Invalid transaction');
+    }
+    const explainedTx = tx.explainTransaction();
+    const txJson = tx.toJson();
 
-  verifyAddress(params: VerifyAddressOptions): boolean {
-    // TODO(STLX-16574): verifyTransaction
+    const { type, stakingOptions, locktime, memo } = params.txParams;
+    if (!type || txJson.type !== TransactionType[type]) {
+      throw new Error('Tx type does not match with expected txParams type');
+    }
+    if (memo && txJson.memo !== memo.value) {
+      throw new Error('Tx memo does not match with expected txParams memo');
+    }
+    if (locktime && txJson.locktime !== locktime) {
+      throw new Error('Tx locktime does not match with expected txParams locktime');
+    }
+    if (!params.txParams.recipients || params.txParams.recipients.length === 0) {
+      const filteredRecipients = [{ address: stakingOptions.nodeID, amount: stakingOptions.amount }];
+      const filteredOutputs = explainedTx.outputs.map((output) => _.pick(output, ['address', 'amount']));
+
+      if (!_.isEqual(filteredOutputs, filteredRecipients)) {
+        throw new Error('Tx outputs does not match with expected txParams');
+      }
+      if (stakingOptions.amount !== explainedTx.outputAmount) {
+        throw new Error('Tx total amount does not match with expected total amount field');
+      }
+    }
     return true;
   }
 
@@ -66,8 +104,24 @@ export class AvaxP extends BaseCoin {
    * @param {VerifyAddressOptions} params address and rootAddress to verify
    */
   isWalletAddress(params: VerifyAddressOptions): boolean {
+    const { address, keychains } = params;
+    if (!this.isValidAddress(address)) {
+      throw new InvalidAddressError(`invalid address: ${address}`);
+    }
+    if (!keychains || keychains.length !== 3) {
+      throw new Error('Invalid keychains');
+    }
+    const walletAddress = keychains.map((keychain) =>
+      new AvaxpLib.KeyPair({ pub: keychain.pub }).getAddress(this._staticsCoin.network.type)
+    );
+    console.log({ walletAddress });
+
+    if (!walletAddress.some((add) => add.endsWith(address))) {
+      throw new UnexpectedAddressError(`address validation failure: ${address} is not of this wallet`);
+    }
     return true;
   }
+
   /**
    * Generate Avaxp key pair
    *

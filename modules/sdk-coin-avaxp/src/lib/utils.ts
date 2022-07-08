@@ -37,7 +37,11 @@ export class Utils implements BaseUtils {
    */
   /** @inheritdoc */
   isValidAddress(address: string): boolean {
-    return (address as string).match(/^[a-zA-Z0-9]+$/) !== null;
+    try {
+      return this.parseAddress(address) !== undefined;
+    } catch {
+      return false;
+    }
   }
 
   /**
